@@ -31,5 +31,5 @@ jobs:
       - name: Deploy Lambda
         run: |
           aws lambda update-function-code \
-            --function-name indusstream-telemetry-processor \
+            --function-name indusstream_process_telemetry \
             --zip-file fileb://v4-automated-telemetry-platform/lambda/lambda.zip
