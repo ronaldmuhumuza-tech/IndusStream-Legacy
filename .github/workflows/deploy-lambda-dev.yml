@@ -1,4 +1,4 @@
-name: Deploy Lambda
+name: Deploy Lambda DEV
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
       - v4-ci-cd-automation
     paths:
       - "v4-automated-telemetry-platform/lambda/**"
-      - ".github/workflows/deploy-lambda.yml"
+      - ".github/workflows/deploy-lambda-dev.yml"
 
 jobs:
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,15 +21,15 @@ jobs:
           cd v4-automated-telemetry-platform/lambda
           zip -r lambda.zip .
 
-      - name: Configure AWS credentials
+      - name: Configure DEV AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
 
-      - name: Deploy Lambda
+      - name: Deploy Lambda to DEV
         run: |
           aws lambda update-function-code \
-            --function-name indusstream_process_telemetry \
+            --function-name indusstream_process_telemetry_dev \
             --zip-file fileb://v4-automated-telemetry-platform/lambda/lambda.zip
