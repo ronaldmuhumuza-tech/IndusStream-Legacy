@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - v4-ci-cd-automation
+
     paths:
       - "v4-automated-telemetry-platform/lambda/**"
       - ".github/workflows/deploy-lambda-dev.yml"
