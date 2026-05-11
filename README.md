@@ -47,7 +47,7 @@ Focus:
 - Scalable telemetry ingestion
 - Edge-to-cloud integration
 
-## [v4 — CI/CD Automation & Deployment Engineering](https://github.com/ronaldmuhumuza-tech/IndusStream/tree/v4-ci-cd-automation)
+##  [v4 — CI/CD Automation & Deployment Engineering](./v4-automated-telemetry-platform/)
 
 Adds automated deployment workflows and DevOps practices to the telemetry platform.
 
@@ -57,7 +57,6 @@ Focus:
 - IAM secret management
 - Deployment automation
 - Operational workflows
-
 
 ## Stack
 
