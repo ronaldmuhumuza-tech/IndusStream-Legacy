@@ -1,0 +1,370 @@
+[1mdiff --git a/v3-edge-to-cloud/README.md b/v3-edge-to-cloud/README.md[m
+[1mindex ec84299..70c588b 100644[m
+[1m--- a/v3-edge-to-cloud/README.md[m
+[1m+++ b/v3-edge-to-cloud/README.md[m
+[36m@@ -41,3 +41,6 @@[m [mDetailed implementation steps and configuration can be found here:[m
+ - [MQTT Publishing](docs/02-mqtt-publishing.md)[m
+ - [Lambda Processing](docs/03-lambda-processing.md)[m
+ - [Data Storage](docs/04-data-storage.md)[m
+[32m+[m[32m- [Notification & Analytics](docs/05-notifications-and-analytics.md)[m
+[32m+[m[32m- [S3 & Athena](docs/06-s3-and-athena.md)[m
+[32m+[m[32m- [ Quicksight Dashboard](docs/07-quicksight-dashboard.md)[m
+\ No newline at end of file[m
+[1mdiff --git a/v3-edge-to-cloud/docs/04-data-storage.md b/v3-edge-to-cloud/docs/04-data-storage.md[m
+[1mindex aedb19a..992d52f 100644[m
+[1m--- a/v3-edge-to-cloud/docs/04-data-storage.md[m
+[1m+++ b/v3-edge-to-cloud/docs/04-data-storage.md[m
+[36m@@ -1,28 +1,60 @@[m
+[31m-# DynamoDB design + future S3 (WIP)[m
+[32m+[m[32m# 04 – Data Storage: DynamoDB Design and Future S3 Integration (WIP)[m
+ [m
+[31m-## Covers:[m
+[31m-* Table design:[m
+[32m+[m[32mThis stage defines how processed telemetry data is stored in DynamoDB and outlines the evolution toward long-term storage and analytics using Amazon S3 and QuickSight.[m
+[32m+[m
+[32m+[m[32mDynamoDB is used as the operational data store for real-time telemetry processing, enabling low-latency queries, alerting, and time-based access patterns.[m[41m [m
+[32m+[m
+[32m+[m[32mTo support long-term analytics and cost-efficient storage, a parallel data pipeline writes flattened telemetry records to Amazon S3, which serves as the data lake for Athena and QuickSight.[m
+[32m+[m
+[32m+[m[32mThis separation of concerns allows the system to handle both real-time processing and large-scale analytics efficiently.[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Table Design[m
+[32m+[m
+[32m+[m[32mThe DynamoDB table is designed using a composite primary key:[m
+ [m
+ ```Bash[m
+[31m-PK: device_id[m
+[31m-SK: timestamp[m
+[32m+[m[32mPartition Key (PK): device_id[m[41m  [m
+[32m+[m[32mSort Key (SK): timestamp[m
+ ```[m
+[31m-* Final item structure:[m
+ [m
+[31m-```Bash[m
+[32m+[m[32m## Why this design?[m
+[32m+[m
+[32m+[m[32m* device_id (PK) : Groups all readings from the same device together[m
+[32m+[m
+[32m+[m[32m* timestamp (SK) : Enables efficient time-based queries (e.g. latest readings, time ranges)[m
+[32m+[m
+[32m+[m[32m## This structure allows queries such as:[m
+[32m+[m
+[32m+[m[32m* “Get latest reading for a device”[m
+[32m+[m[32m* “Get all readings between two timestamps”[m
+[32m+[m[32m* “Retrieve full telemetry history for a device”[m
+[32m+[m
+[32m+[m[32m## Item Structure[m
+[32m+[m
+[32m+[m[32mEach record stored in DynamoDB follows a consistent schema:[m
+[32m+[m
+[32m+[m[32m```JSON[m
+ {[m
+[31m-  "device_id": "...",[m
+[31m-  "timestamp": "...",[m
+[31m-  "metrics": {...},[m
+[31m-  "status": {...},[m
+[31m-  "ttl": ...[m
+[32m+[m[32m  "device_id": "raspberry-pi-edge-gateway",[m
+[32m+[m[32m  "timestamp": "2026-05-02T21:20:22Z",[m
+[32m+[m[32m  "schema_version": "v1",[m
+[32m+[m[32m  "source": "sqlite-local-buffer",[m
+[32m+[m[32m  "source_id": "arduino-uno-wifi-rev2-01",[m
+[32m+[m[32m  "ingested_at": "2026-05-02T21:20:25Z",[m
+[32m+[m[32m  "metrics": {[m
+[32m+[m[32m    "temperature_c": 29.33,[m
+[32m+[m[32m    "co_raw": 450,[m
+[32m+[m[32m    "co_voltage": 2.199,[m
+[32m+[m[32m    "co_rs_ohms": 12733,[m
+[32m+[m[32m    "light_raw": 36,[m
+[32m+[m[32m    "sound_raw": 13[m
+[32m+[m[32m  },[m
+[32m+[m[32m  "status": {[m
+[32m+[m[32m    "light_state": "dark",[m
+[32m+[m[32m    "sound_event": false[m
+[32m+[m[32m  },[m
+[32m+[m[32m  "ttl": 1780348226[m
+ }[m
+ ```[m
+[31m-[m
+[31m-* Why this is scalable[m
+[31m-* Trade-offs vs:[m
+[31m-    - S3[m
+[31m-    - Timestream[m
+[31m-* Preview next step:[m
+[31m-[m
+[31m-DynamoDB → S3 → QuickSight[m
+\ No newline at end of file[m
+[32m+[m[32m![DynamoDB Table Items](../tests/dynamodb-table-items.png)[m
+\ No newline at end of file[m
+[1mdiff --git a/v3-edge-to-cloud/docs/05-notifications-and-analytics.md b/v3-edge-to-cloud/docs/05-notifications-and-analytics.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f31e14b[m
+[1m--- /dev/null[m
+[1m+++ b/v3-edge-to-cloud/docs/05-notifications-and-analytics.md[m
+[36m@@ -0,0 +1,105 @@[m
+[32m+[m
+[32m+[m[32m# 05 – Notifications and Analytics[m
+[32m+[m
+[32m+[m[32mThis stage extends the system beyond real-time ingestion and storage by introducing alerting, long-term data retention, and analytics capabilities.[m
+[32m+[m
+[32m+[m[32mWhile DynamoDB serves as the operational data store for low-latency access to recent telemetry, additional services are integrated to support downstream use cases including alerting, historical analysis, and dashboarding.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## Architecture Extension[m
+[32m+[m
+[32m+[m[32mTo support these capabilities, the architecture is extended with additional AWS services:[m
+[32m+[m
+[32m+[m[32m* Amazon SNS enables real-time notifications based on telemetry conditions[m[41m  [m
+[32m+[m[32m* Amazon S3 provides scalable and cost-effective long-term storage[m[41m  [m
+[32m+[m[32m* Amazon QuickSight enables visualisation and dashboarding[m[41m  [m
+[32m+[m
+[32m+[m[32mTogether, these components transform the system from a data pipeline into a complete, production-ready analytics architecture.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## 5.1 Amazon SNS (Alerts)[m
+[32m+[m
+[32m+[m[32mAmazon SNS is used to send notifications when telemetry values meet defined alert conditions.[m
+[32m+[m
+[32m+[m[32mIn this project, SNS is used to detect abnormal sensor readings, such as elevated carbon monoxide levels, and trigger notifications without requiring manual monitoring.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Alert Flow[m
+[32m+[m
+[32m+[m[32m```text[m
+[32m+[m[32mTelemetry Payload → Lambda → Condition Check → Amazon SNS → Email / SMS[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Trigger Conditions[m
+[32m+[m
+[32m+[m[32mAlert conditions are evaluated within the Lambda function based on incoming telemetry values.[m
+[32m+[m
+[32m+[m[32mTypical conditions include:[m
+[32m+[m
+[32m+[m[32m* High carbon monoxide readings[m
+[32m+[m[32m* Abnormal sensor readings[m
+[32m+[m[32m* Missing or irregular telemetry datas[m
+[32m+[m
+[32m+[m[32mExample condition:[m
+[32m+[m
+[32m+[m[32m```Python[m
+[32m+[m
+[32m+[m[32mif co_raw >= CO_RAW_ALERT_THRESHOLD:[m
+[32m+[m[32m    publish_alert()[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Publishing Alerts from Lambda[m
+[32m+[m
+[32m+[m[32mThe Lambda function evaluates telemetry values and publishes an alert to Amazon SNS when a threshold condition is met.[m
+[32m+[m
+[32m+[m[32mExample implementation:[m
+[32m+[m
+[32m+[m[32m```python[m
+[32m+[m[32mco_raw = item["metrics"].get("co_raw")[m
+[32m+[m
+[32m+[m[32mif co_raw is not None and co_raw >= CO_RAW_ALERT_THRESHOLD:[m
+[32m+[m[32m    sns.publish([m
+[32m+[m[32m        TopicArn=SNS_TOPIC_ARN,[m
+[32m+[m[32m        Subject="IndusStream Alert: High CO Reading",[m
+[32m+[m[32m        Message=([m
+[32m+[m[32m            f"High CO reading detected.\n\n"[m
+[32m+[m[32m            f"Device: {item['device_id']}\n"[m
+[32m+[m[32m            f"Timestamp: {item['timestamp']}\n"[m
+[32m+[m[32m            f"CO Raw: {co_raw}"[m
+[32m+[m[32m        )[m
+[32m+[m[32m    )[m
+[32m+[m[32m```[m
+[32m+[m[32mThis ensures that alerts are triggered automatically based on real telemetry conditions.[m
+[32m+[m
+[32m+[m[32m> The SNS topic ARN is configured using a Lambda environment variable.[m
+[32m+[m
+[32m+[m[32m### Notifications Channels[m
+[32m+[m
+[32m+[m[32mAmazon SNS supports multiple delivery mechanisms:[m
+[32m+[m
+[32m+[m[32m* Email[m
+[32m+[m[32m* SMS[m
+[32m+[m[32m* Other subscribed endpoints[m
+[32m+[m
+[32m+[m[32mFor this project, email notifications will be used because they are simple and cost-effective.[m
+[32m+[m
+[32m+[m[32m### NS Workflow Validation[m
+[32m+[m
+[32m+[m[32mThe following screenshots demonstrate the complete SNS alerting workflow:[m
+[32m+[m
+[32m+[m[32m#### SNS Topic Configuration[m
+[32m+[m
+[32m+[m[32m![SNS Topic](../tests/sns-topic.png)[m
+[32m+[m
+[32m+[m[32m#### Subscription Confirmation[m
+[32m+[m
+[32m+[m[32m![SNS Subscription Confirmed](../tests/sns-subscription-confirmed.png)[m
+[32m+[m
+[32m+[m[32m#### Alert Notification[m
+[32m+[m
+[32m+[m[32m![SNS Alert Email](../tests/sns-alert-email.png)[m
+[32m+[m
+[32m+[m[32mThese confirm that telemetry-driven alerts are successfully generated, processed by Lambda, and delivered via SNS in near real time.[m
+\ No newline at end of file[m
+[1mdiff --git a/v3-edge-to-cloud/docs/06-s3-and-athena.md b/v3-edge-to-cloud/docs/06-s3-and-athena.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..bd15cd0[m
+[1m--- /dev/null[m
+[1m+++ b/v3-edge-to-cloud/docs/06-s3-and-athena.md[m
+[36m@@ -0,0 +1,97 @@[m
+[32m+[m[32m# 06 – Data Lake and Query Layer (S3 + Athena)[m
+[32m+[m
+[32m+[m[32mThis stage introduces a scalable analytics layer using Amazon S3 and Amazon Athena.[m
+[32m+[m
+[32m+[m[32mWhile DynamoDB serves as the operational data store for real-time ingestion, Amazon S3 is used as a data lake for long-term storage and analytical workloads.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m## 6.1 Amazon S3 (Data Lake)[m
+[32m+[m
+[32m+[m[32mDynamoDB data was initially exported to Amazon S3 to validate archival and data lake integration capabilities.[m
+[32m+[m
+[32m+[m[32mThis confirmed that operational telemetry data can be offloaded for long-term storage.[m
+[32m+[m
+[32m+[m[32mHowever, the native export format (Amazon Ion) is not optimised for analytics workloads and can lead to parsing issues when queried using Athena.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Limitation of DynamoDB Export[m
+[32m+[m
+[32m+[m[32mThe exported dataset uses Amazon Ion format, which introduces:[m
+[32m+[m
+[32m+[m[32m* Nested structures[m
+[32m+[m[32m* Type annotations (e.g. `N`, `S`)[m
+[32m+[m[32m* Compatibility challenges with Athena queries[m
+[32m+[m
+[32m+[m[32mAs a result, this format is suitable for archival purposes but not ideal for analytics or dashboarding.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Analytics Dataset (Lambda → S3)[m
+[32m+[m
+[32m+[m[32mTo address this limitation, the Lambda function was extended to write a separate, flattened JSON dataset directly to S3.[m
+[32m+[m
+[32m+[m[32mEach telemetry event is transformed into an analytics-friendly structure before being stored.[m
+[32m+[m
+[32m+[m[32mExample structure:[m
+[32m+[m
+[32m+[m[32m```json[m
+[32m+[m[32m{[m
+[32m+[m[32m  "device_id": "raspberry-pi-edge-gateway",[m
+[32m+[m[32m  "timestamp": "2026-05-04T12:44:44Z",[m
+[32m+[m[32m  "temperature_c": 28.84,[m
+[32m+[m[32m  "co_raw": 279,[m
+[32m+[m[32m  "light_raw": 36,[m
+[32m+[m[32m  "sound_raw": 12,[m
+[32m+[m[32m  "light_state": "dark",[m
+[32m+[m[32m  "sound_event": false[m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m[32m### Partitioning Strategy[m
+[32m+[m
+[32m+[m[32mData is stored using a date-based partitioning scheme:[m
+[32m+[m
+[32m+[m[32m```text[m
+[32m+[m[32manalytics/year=YYYY/month=MM/day=DD/[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mThis improves query performance and reduces cost when using Athena.[m
+[32m+[m
+[32m+[m[32m## 6.2 Data Flow[m
+[32m+[m[32mLambda → S3 → Athena → QuickSight[m
+[32m+[m
+[32m+[m[32mThis pipeline enables:[m
+[32m+[m
+[32m+[m[32m* Serverless querying using Athena[m
+[32m+[m[32m* Efficient access to large datasets[m
+[32m+[m[32m* Integration with visualisation tools[m
+[32m+[m
+[32m+[m[32m## 6.3 Analytics Data Strategy[m
+[32m+[m
+[32m+[m[32mTwo data paths are maintained:[m
+[32m+[m
+[32m+[m[32m* DynamoDB – Operational store for real-time ingestion and recent telemetry access[m
+[32m+[m[32m* S3 (JSON) – Analytics store for Athena and QuickSight[m
+[32m+[m
+[32m+[m[32mThis separation ensures:[m
+[32m+[m
+[32m+[m[32m* Low-latency access for operational workloads[m
+[32m+[m[32m* Scalable and cost-efficient storage for analytics[m
+[32m+[m[32m* Clean data structures optimised for querying[m
+[32m+[m
+[32m+[m[32m## 6.4 Athena Query Layer[m
+[32m+[m
+[32m+[m[32mAmazon Athena is used to query telemetry data stored in S3 using standard SQL.[m
+[32m+[m
+[32m+[m[32mKey capabilities include:[m
+[32m+[m
+[32m+[m[32m* Serverless querying (no infrastructure required)[m
+[32m+[m[32m* Direct integration with S3[m
+[32m+[m[32m* Seamless connection to QuickSight[m
+[32m+[m
+[32m+[m[32mAthena enables efficient analysis of telemetry data without impacting the operational DynamoDB workload.[m
+[32m+[m
+[32m+[m[32mNotes[m
+[32m+[m
+[32m+[m[32mDue to the architecture (S3 → Athena), this layer supports near-real-time analytics rather than real-time processing. Data availability depends on S3 write timing and Athena query execution.[m
+\ No newline at end of file[m
+[1mdiff --git a/v3-edge-to-cloud/docs/07-quicksight-dashboard.md b/v3-edge-to-cloud/docs/07-quicksight-dashboard.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..416ba38[m
+[1m--- /dev/null[m
+[1m+++ b/v3-edge-to-cloud/docs/07-quicksight-dashboard.md[m
+[36m@@ -0,0 +1,48 @@[m
+[32m+[m[32m### 7 Amazon QuickSight (Dashboarding)[m
+[32m+[m
+[32m+[m[32mAmazon QuickSight is used to visualise telemetry data stored in Amazon S3 and queried through Athena.[m
+[32m+[m
+[32m+[m[32mThe QuickSight dashboard uses SPICE for improved performance and scheduled refresh, providing near-real-time analytics while reducing query overhead on Athena.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Dashboard Capabilities[m
+[32m+[m
+[32m+[m[32mThe dashboard provides near-real-time insights into sensor readings, including:[m
+[32m+[m
+[32m+[m[32m* Temperature trends[m[41m  [m
+[32m+[m[32m* Carbon monoxide (CO) levels[m[41m  [m
+[32m+[m[32m* Sound intensity[m[41m  [m
+[32m+[m[32m* Light levels[m[41m  [m
+[32m+[m
+[32m+[m[32mKey features include:[m
+[32m+[m
+[32m+[m[32m* Time-series visualisations for sensor metrics[m[41m  [m
+[32m+[m[32m* A recent readings table displaying the latest telemetry values[m[41m  [m
+[32m+[m[32m* Aggregated views to identify trends and anomalies[m[41m  [m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Data Integration[m
+[32m+[m
+[32m+[m[32mQuickSight queries data via Athena, which reads structured JSON data stored in Amazon S3. This enables scalable and cost-effective analytics over large datasets without impacting the operational DynamoDB workload.[m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Data Freshness[m
+[32m+[m
+[32m+[m[32mDue to the architecture (S3 → Athena → QuickSight), the dashboard operates in near-real-time rather than real-time.[m
+[32m+[m
+[32m+[m[32mData freshness depends on:[m
+[32m+[m
+[32m+[m[32m* S3 data ingestion timing[m[41m  [m
+[32m+[m[32m* Athena query execution[m[41m  [m
+[32m+[m[32m* SPICE dataset refresh schedules[m[41m  [m
+[32m+[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m### Dashboard Overview[m
+[32m+[m
+[32m+[m[32mThe dashboard demonstrates how telemetry data flows from edge devices into a cloud-native analytics stack, enabling monitoring, alerting, and historical analysis.[m
+[32m+[m
+[32m+[m[32m![QuickSight Dashboard](../tests/quicksight-dashboard.png)[m
+\ No newline at end of file[m
