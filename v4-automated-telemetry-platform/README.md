@@ -1,10 +1,17 @@
-# v4 – Automated Telemetry Platform
+# v4 — CI/CD Automation & Deployment Engineering
 
-This version evolves IndusStream from a working edge-to-cloud telemetry pipeline into a more automated and operationally mature platform.
+This version moves IndusStream from a working edge-to-cloud telemetry pipeline into a more automated platform.
 
 The focus of v4 is CI/CD, telemetry data quality, automated deployment, and improved operational reliability.
 
 ---
+
+## Physical Edge Prototype
+
+The automated platform builds on the mounted edge prototype, where sensors are connected through Arduino and processed by a Raspberry Pi edge gateway before deployment, validation, and cloud integration workflows are automated.
+
+<img src="tests/physical-edge-board.jpeg" width="700">
+
 
 ## Objectives
 
@@ -13,20 +20,6 @@ The focus of v4 is CI/CD, telemetry data quality, automated deployment, and impr
 - Reduce manual deployment steps
 - Prepare the platform for repeatable infrastructure changes
 - Improve observability and failure visibility
-
----
-
-## Architecture Evolution
-
-```text
-GitHub
-  ↓
-GitHub Actions
-  ↓
-Automated Lambda Deployment
-  ↓
-AWS IoT Core → Lambda → DynamoDB / S3 → Athena → QuickSight
-```
 
 ---
 
