@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 # DEV deployment validation test
-S3_BUCKET = "indusstream-telemetry-data"
+S3_BUCKET = "indusstream-telemetry-data-dev"
 S3_PREFIX = "analytics"
 
 SNS_TOPIC_ARN = os.environ["snstopic"]
@@ -18,7 +18,7 @@ TEMP_OFFSET_C = 6.29
 R0 = 23500
 SOUND_RAW_MAX_VALID = 120
 
-TABLE_NAME = "indusstream_telemetry"
+TABLE_NAME = "indusstream_telemetry_dev"
 TTL_DAYS = 30
 
 dynamodb = boto3.resource("dynamodb")
