@@ -6,6 +6,7 @@ import math
 from datetime import datetime, timezone
 from decimal import Decimal
 
+# DEV deployment validation test
 S3_BUCKET = "indusstream-telemetry-data"
 S3_PREFIX = "analytics"
 
