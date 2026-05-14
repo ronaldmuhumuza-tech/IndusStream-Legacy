@@ -163,4 +163,4 @@ def lambda_handler(event, context):
         "message": "Telemetry stored",
         "device_id": item["device_id"],
         "timestamp": item["timestamp"],
-    }
+    }# DEV redeploy trigger Fri May 15 00:38:37 GMTDT 2026
