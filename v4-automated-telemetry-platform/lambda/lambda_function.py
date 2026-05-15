@@ -19,7 +19,9 @@ R0 = 23500
 SOUND_RAW_MAX_VALID = 120
 
 TABLE_NAME = "indusstream_telemetry_dev"
-TTL_DAYS = 30
+TTL_DAYS = 7
+
+S3_ARCHIVE_INTERVAL_MINUTES = 10
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(TABLE_NAME)
@@ -78,6 +80,14 @@ def estimate_co_ppm(rs_value):
     return Decimal(str(round(10 ** ((-1.5 * math.log10(ratio)) + 1.7), 2)))
 
 
+def should_archive_to_s3(timestamp):
+    try:
+        minute = int(timestamp[14:16])
+        return minute % S3_ARCHIVE_INTERVAL_MINUTES == 0
+    except Exception:
+        return False
+    
+
 def write_analytics_record_to_s3(item):
     metrics = item["metrics"]
     status = item["status"]
@@ -109,7 +119,7 @@ def write_analytics_record_to_s3(item):
 
 
 def lambda_handler(event, context):
-    print("Received event:", event)
+    print(f"Processing telemetry for {event.get('device_id', 'unknown-device')}")
 
     reading = event.get("reading", {})
     timestamp = reading.get("timestamp") or datetime.now(timezone.utc).isoformat()
@@ -156,7 +166,9 @@ def lambda_handler(event, context):
         )
 
     table.put_item(Item=item)
-    write_analytics_record_to_s3(item)
+
+    if should_archive_to_s3(item["timestamp"]):
+        write_analytics_record_to_s3(item)
 
     return {
         "statusCode": 200,
