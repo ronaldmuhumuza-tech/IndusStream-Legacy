@@ -152,18 +152,21 @@ def lambda_handler(event, context):
     }
 
     if co_raw is not None and co_raw >= CO_RAW_ALERT_THRESHOLD:
-        sns.publish(
-            TopicArn=SNS_TOPIC_ARN,
-            Subject="IndusStream Alert: High CO Reading",
-            Message=(
-                f"High CO reading detected.\n\n"
-                f"Device: {item['device_id']}\n"
-                f"Timestamp: {item['timestamp']}\n"
-                f"CO Raw: {co_raw}\n"
-                f"CO PPM Estimate: {co_ppm_est}\n"
-                f"Source: {item['source_id']}"
-            ),
-        )
+        try:
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Subject="IndusStream Alert: High CO Reading",
+                Message=(
+                    f"High CO reading detected.\n\n"
+                    f"Device: {item['device_id']}\n"
+                    f"Timestamp: {item['timestamp']}\n"
+                    f"CO Raw: {co_raw}\n"
+                    f"CO PPM Estimate: {co_ppm_est}\n"
+                    f"Source: {item['source_id']}"
+                ),
+            )
+        except Exception as e:
+            print("SNS publish failed:", str(e))
 
     table.put_item(Item=item)
 
