@@ -29,6 +29,32 @@ QuickSight queries data via Athena, which reads structured JSON data stored in A
 
 ---
 
+## Data Query Workflow
+
+Telemetry data stored in Amazon S3 is queried using Amazon Athena and transformed into an analytics-ready dataset for QuickSight.
+
+### Query Logic
+
+The Athena query performs the following transformations:
+
+- Converts ISO 8601 timestamp strings into a proper datetime format
+- Extracts a human-readable 24-hour time format for display
+- Filters recent data for efficient dashboard performance
+
+```sql
+SELECT
+  device_id,
+  timestamp,
+  date_parse(timestamp, '%Y-%m-%dT%H:%i:%sZ') AS ts,
+  date_format(date_parse(timestamp, '%Y-%m-%dT%H:%i:%sZ'), '%H:%i') AS time_24h,
+  temperature_c,
+  co_ppm_est,
+  sound_raw,
+  light_raw
+FROM indusstream.telemetry_analytics
+WHERE date_parse(timestamp, '%Y-%m-%dT%H:%i:%sZ') >= current_timestamp - interval '2' day
+ORDER BY ts DESC;
+```
 ### Data Freshness
 
 Due to the architecture (S3 → Athena → QuickSight), the dashboard operates in near-real-time rather than real-time.

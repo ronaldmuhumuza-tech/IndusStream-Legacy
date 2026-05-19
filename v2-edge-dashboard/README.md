@@ -2,6 +2,13 @@
 
 An edge-based telemetry system using Arduino and Raspberry Pi for real-time environmental monitoring and visualisation.
 
+## Physical Edge Prototype
+
+The edge telemetry prototype consists of multiple sensors connected to an Arduino, with telemetry processed locally through a Raspberry Pi dashboard stack.
+
+<img src="docs/physical-edge-board.jpeg" width="700">
+
+
 ## Architecture
 
 ![Architecture](docs/architecture.png)

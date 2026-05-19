@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Project paths
@@ -10,16 +11,41 @@ LOGS_DIR = BASE_DIR / "logs"
 DB_FILE_PREFIX = "indusstream"
 V2_DB_PATH = BASE_DIR.parent / "v2-edge-dashboard" / "data" / "indusstream.db"
 
+
+def load_env_file(path):
+    env_path = Path(path)
+    if not env_path.exists():
+        raise FileNotFoundError(f"Environment config file not found: {env_path}")
+
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+
+            if not line or line.startswith("#"):
+                continue
+
+            if "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip())
+
+
+ENV_NAME = os.getenv("INDUSSTREAM_ENV", "dev")
+ENV_FILE = Path(f"/home/pi/indusstream/config/{ENV_NAME}.env")
+
+load_env_file(ENV_FILE)
+
 # AWS IoT Core MQTT settings
-AWS_IOT_ENDPOINT = "a3gt3vmsguju2d-ats.iot.eu-west-2.amazonaws.com"
-MQTT_PORT = 8883
-MQTT_TOPIC = "indusstream/v3/telemetry"
+AWS_IOT_ENDPOINT = os.environ["AWS_IOT_ENDPOINT"]
+MQTT_PORT = int(os.getenv("MQTT_PORT", "8883"))
+MQTT_TOPIC = os.environ["MQTT_TOPIC"]
 
 # AWS IoT certificate paths
-ROOT_CA_PATH = CERTS_DIR / "AmazonRootCA1.pem"
-DEVICE_CERT_PATH = CERTS_DIR / "device-certificate.pem.crt"
-PRIVATE_KEY_PATH = CERTS_DIR / "private.pem.key"
+ROOT_CA_PATH = Path(os.environ["ROOT_CA_PATH"])
+DEVICE_CERT_PATH = Path(os.environ["DEVICE_CERT_PATH"])
+PRIVATE_KEY_PATH = Path(os.environ["PRIVATE_KEY_PATH"])
 
 # Publish behaviour
-PUBLISH_INTERVAL_SECONDS = 1800
-MQTT_CLIENT_ID = "indusstream-edge-gateway-01"
+PUBLISH_INTERVAL_SECONDS = int(os.getenv("PUBLISH_INTERVAL_SECONDS", "1800"))
+MQTT_CLIENT_ID = os.environ["MQTT_CLIENT_ID"]

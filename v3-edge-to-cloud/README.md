@@ -6,6 +6,12 @@ Telemetry data is collected from Arduino-based sensors, processed at a Raspberry
 
 ---
 
+## Physical Edge Prototype
+
+The physical prototype consists of four sensors connected to an Arduino, with a Raspberry Pi acting as the edge gateway for telemetry processing and cloud publishing.
+
+<img src="tests/physical-edge-board.jpeg" width="700">
+
 ## Architecture
 
 ![Architecture Diagram](docs/architecture.png)
